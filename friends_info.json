@@ -1,0 +1,18 @@
+{
+    "friends":[
+        {
+            "wechat_name": "zx",
+            "birthday": "6.11",
+            "send_time": "11:15",
+            "nickname": "雪雪"
+        },
+        {
+            "wechat_name": "zx",
+            "birthday": "6.11",
+            "send_time": "11:15",
+            "nickname": "雪雪",
+            "message": "hi",
+            "is_lunar": false
+        }
+    ]
+}
