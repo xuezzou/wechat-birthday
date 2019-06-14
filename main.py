@@ -38,8 +38,11 @@ class friend:
 
 
 class wechat_birthday:
-    def __init__(self):
+    def __init__(self, if_group=False, group_name=None):
         self.friend_list = self.get_data()
+        self.if_group = if_group
+        self.group_name = group_name
+        self.group_id = None
 
 
     def get_data(self):
@@ -122,6 +125,17 @@ class wechat_birthday:
         # schedule event
         scheduler = BlockingScheduler()
 
+        # if send to group get the group id
+        if self.if_group:
+            groups = itchat.search_chatrooms(name=self.group_name)
+            if not groups:
+                print('group name {} does not exist'.format(self.group_name))
+                return
+            if len(groups) > 1:
+                print('group name {} has duplicates'.format(self.group_name))
+                return
+            self.group_id = groups[0]['UserName']
+
         for friend in self.friend_list:
             wechat_name = friend.wechat_name
             friends = itchat.search_friends(name=wechat_name)
@@ -133,11 +147,11 @@ class wechat_birthday:
                 return
             # tie the corresponding unique id
             friend.id = friends[0].get('UserName')
+
             # add job to scheduler
             scheduler.add_job(self.send_message, 'cron', 
                               month=friend.month, day=friend.day, hour=friend.hour, minute=friend.minute, second=0,
                               args=[friend])
-
         scheduler.start()
 
             
@@ -148,17 +162,29 @@ class wechat_birthday:
         :return: None
         """
         if self.is_online(auto_login=True):
-            itchat.send(friend.message, toUserName=friend.id)
+            # set destination according to if send to group or send directly
+            if not self.if_group:
+                user = friend.id
+                message = friend.message
+            else:
+                user = self.group_id
+                message = '@' + '%s\n%s' % (friend.wechat_name, friend.message)
+            itchat.send(message, toUserName=user)
             # prevent to send msg too fast
             time.sleep(5)
 
         # flag for successfully send the msg
+        if self.if_group:
+            print('send to group ' + self.group_name)
+        
         print(friend)
         print('Send successfully...\n')
 
 
 if __name__ == '__main__':
     wechat_birthday_bot = wechat_birthday()
+    # wechat_birthday_bot = wechat_birthday(True, "serh gut")
+    
     # test the friend list 
     # print(wechat_birthday_bot.friend_list)
     # run the main program
